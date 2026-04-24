@@ -1,29 +1,21 @@
 import SwiftUI
 
 struct RowView: View {
-    let imageURL: URL?
+    let image: UIImage?
     let title: String
     let explanation: String
     let date: Date
+    let onAppear: () -> Void
 
     private let avatarSize: CGFloat = 50
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
 
             HStack(alignment: .center, spacing: 12) {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .empty:
-                        ZStack {
-                            Circle().fill(Color.gray.opacity(0.15))
-                            ProgressView()
-                                .tint(.secondary)
-                        }
-                    case .success(let image):
-                        image
+                Group {
+                    if let image = image {
+                        Image(uiImage: image)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(width: avatarSize, height: avatarSize)
@@ -31,21 +23,15 @@ struct RowView: View {
                             .overlay(
                                 Circle().stroke(Color(.separator), lineWidth: 0.5)
                             )
-                    case .failure:
+                    } else {
                         ZStack {
                             Circle().fill(Color.gray.opacity(0.15))
-                            Image(systemName: "person.crop.circle.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .foregroundColor(.secondary)
-                                .padding(10)
+                            ProgressView()
+                                .tint(.secondary)
                         }
                         .frame(width: avatarSize, height: avatarSize)
-                    @unknown default:
-                        EmptyView()
                     }
                 }
-                .frame(width: avatarSize, height: avatarSize)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
@@ -73,5 +59,8 @@ struct RowView: View {
         .padding(.horizontal, 8)
         .background(Color(.secondarySystemBackground))
         .cornerRadius(15)
+        .onAppear {
+            onAppear()
+        }
     }
 }
