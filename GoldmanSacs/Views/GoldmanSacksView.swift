@@ -9,6 +9,7 @@ import SwiftUI
 
 struct GoldmanSacksView: View {
     @StateObject private var viewModel = GoldmanSacksViewModel()
+    @Binding var showMainView: Bool
     
     var body: some View {
         NavigationView {
@@ -36,6 +37,15 @@ struct GoldmanSacksView: View {
                 }
             }
             .navigationBarTitle("Goldman Sacks")
+            .navigationBarItems(trailing: Button(action: {
+                withAnimation(.easeInOut) {
+                    showMainView = false
+                }
+            }) {
+                Image(systemName: "xmark")
+                    .font(.title2)
+                    .foregroundColor(.primary)
+            })
         }
     }
 }

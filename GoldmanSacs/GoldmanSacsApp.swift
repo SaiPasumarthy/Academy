@@ -11,7 +11,7 @@ import SwiftUI
 struct GoldmanSacsApp: App {
     var body: some Scene {
         WindowGroup {
-            GoldmanSacksView()
+            LoginView()
         }
     }
 }
