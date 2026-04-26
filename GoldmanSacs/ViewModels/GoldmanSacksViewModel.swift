@@ -28,7 +28,6 @@ class GoldmanSacksViewModel: ObservableObject {
                 self?.isLoading = false
                 self?.items = returnedItems
                 self?.getImages(for: returnedItems)
-                print("Decoded items: \(returnedItems.count)")
             })
             .store(in: &cancellables)
     }
@@ -56,7 +55,6 @@ class GoldmanSacksViewModel: ObservableObject {
     }
     
     func downloadImage(for item: GSItems) {
-        print("Downloading images...")
         guard let urlString = item.url else { return }
         guard images[urlString] == nil else { return } // already downloaded
         guard let url = URL(string: urlString) else { return }
