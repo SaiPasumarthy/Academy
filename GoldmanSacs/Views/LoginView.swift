@@ -8,9 +8,10 @@
 import SwiftUI
 
 struct LoginView: View {
-    @State private var username = ""
-    @State private var password = ""
+    @StateObject private var viewModel = LoginViewModel()
     @State private var showMainView = false
+    
+    @FocusState private var focusedField: Field?
 
     var body: some View {
         ZStack {
@@ -24,21 +25,24 @@ struct LoginView: View {
                         .secondaryHeadline()
                     
 
-                    TextField("Enter username", text: $username)
+                    TextField("Enter username", text: $viewModel.userName)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
+                        .focused($focusedField, equals: .password)
                         .styledTextField()
 
                     Text("Password")
                         .secondaryHeadline()
 
-                    SecureField("Enter password", text: $password)
+                    SecureField("Enter password", text: $viewModel.password)
+                        .focused($focusedField, equals: .username)
                         .styledTextField()
                 }
                 .padding(.horizontal)
 
                 VStack(spacing: 14) {
                     Button(action: {
+                        viewModel.signIn()
                         withAnimation(.easeInOut) {
                             showMainView = true
                         }
@@ -61,13 +65,26 @@ struct LoginView: View {
             }
             .padding()
             
+            
             if showMainView {
                 GoldmanSacksView(showMainView: $showMainView)
                     .transition(.move(edge: .trailing))
                     .zIndex(1)
             }
+            
+        }
+        .onChange(of: showMainView) { _, newValue in
+            if !newValue {
+                viewModel.clearUserCredentials()
+                focusedField = nil
+            }
         }
     }
+    
+}
+
+enum Field {
+    case username, password
 }
 
 #Preview {
