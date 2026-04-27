@@ -8,9 +8,10 @@
 import SwiftUI
 
 struct LoginView: View {
-    @State private var username = ""
-    @State private var password = ""
+    @StateObject private var viewModel = LoginViewModel()
     @State private var showMainView = false
+    
+    @FocusState private var focusedField: Field?
 
     var body: some View {
         ZStack {
@@ -24,28 +25,29 @@ struct LoginView: View {
                         .secondaryHeadline()
                     
 
-                    TextField("Enter username", text: $username)
+                    TextField("Enter username", text: $viewModel.userName)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
+                        .focused($focusedField, equals: .username)
                         .styledTextField()
 
                     Text("Password")
                         .secondaryHeadline()
 
-                    SecureField("Enter password", text: $password)
+                    SecureField("Enter password", text: $viewModel.password)
+                        .focused($focusedField, equals: .password)
                         .styledTextField()
                 }
                 .padding(.horizontal)
 
                 VStack(spacing: 14) {
                     Button(action: {
-                        withAnimation(.easeInOut) {
-                            showMainView = true
-                        }
+                        // TODO: handle sign in action
                     }) {
                         Text("Sign In")
-                            .primaryButton()
+                            .primaryButton(backgroundColor: viewModel.isValid ? Color.blue : Color.gray.opacity(0.5), foregroundColor: .white)
                     }
+                    .disabled(!viewModel.isValid)
 
                     Button(action: {
                         // TODO: handle sign up action
@@ -61,13 +63,26 @@ struct LoginView: View {
             }
             .padding()
             
+            
             if showMainView {
                 GoldmanSacksView(showMainView: $showMainView)
                     .transition(.move(edge: .trailing))
                     .zIndex(1)
             }
+            
+        }
+        .onChange(of: showMainView) { _, newValue in
+            if !newValue {
+                viewModel.clearUserCredentials()
+                focusedField = nil
+            }
         }
     }
+    
+}
+
+enum Field {
+    case username, password
 }
 
 #Preview {
