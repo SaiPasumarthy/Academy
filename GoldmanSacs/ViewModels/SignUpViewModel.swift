@@ -29,6 +29,8 @@ class SignUpViewModel: ObservableObject {
     
     @Published var showErrorAlert = false
     @Published var errorMessage = ""
+    
+    @Published var isLoading = false
 
     private var authProvider: AuthenticationProvider
 
@@ -171,11 +173,10 @@ class SignUpViewModel: ObservableObject {
         if emailError != nil {
             email = ""
         }
-        if passwordError != nil {
+        if passwordError != nil || confirmPasswordError != nil {
             password = ""
-        }
-        if confirmPasswordError != nil {
             confirmPassword = ""
+
         }
     }
 }
