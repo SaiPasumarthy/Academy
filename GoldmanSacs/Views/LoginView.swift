@@ -10,6 +10,7 @@ import SwiftUI
 struct LoginView: View {
     @StateObject private var viewModel = LoginViewModel()
     @State private var showMainView = false
+    @State private var showSignUpView: Bool = false
     
     @FocusState private var focusedField: Field?
 
@@ -45,12 +46,12 @@ struct LoginView: View {
                         // TODO: handle sign in action
                     }) {
                         Text("Sign In")
-                            .primaryButton(backgroundColor: viewModel.isValid ? Color.blue : Color.gray.opacity(0.5), foregroundColor: .white)
+                            .primaryButton(backgroundColor: false ? Color.blue : Color.gray.opacity(0.5), foregroundColor: .white)
                     }
-                    .disabled(!viewModel.isValid)
+                    .disabled(true) // TODO: enable when sign in logic is implemented
 
                     Button(action: {
-                        // TODO: handle sign up action
+                        showSignUpView = true
                     }) {
                         Text("Sign Up")
                             .primaryButton(backgroundColor: Color.gray.opacity(0.2), foregroundColor: .blue)
@@ -62,7 +63,9 @@ struct LoginView: View {
                 Spacer()
             }
             .padding()
-            
+            .fullScreenCover(isPresented: $showSignUpView) {
+                SignUpView()
+            }
             
             if showMainView {
                 GoldmanSacksView(showMainView: $showMainView)
