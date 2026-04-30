@@ -7,6 +7,13 @@
 
 import Foundation
 
+struct UserMetadata {
+    let uid: String
+    let email: String
+    let firstName: String
+    let lastName: String?
+}
+
 protocol AuthenticationProvider {
     func createUser(email: String, password: String) async throws -> AuthDataResultModel
     func signIn(email: String, password: String) async throws -> AuthDataResultModel

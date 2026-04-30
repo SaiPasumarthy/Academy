@@ -7,7 +7,6 @@
 
 import Foundation
 import Combine
-import FirebaseFirestore
 
 class SignUpViewModel: ObservableObject {
     @Published var firstName: String = ""
@@ -34,16 +33,16 @@ class SignUpViewModel: ObservableObject {
 
     private var authProvider: AuthenticationProvider
 
-    init(authProvider: AuthenticationProvider = AuthencationManager()) {
+    init(authProvider: AuthenticationProvider = AuthencationManager.shared) {
         self.authProvider = authProvider
     }
 
     func handleSignUp() async -> Bool {
         if validateFields() {
             do {
-                // Check if user already exists
-                if let existenceMessage = try await checkUserExists() {
-                    userExistsAlertMessage = existenceMessage
+                // Check if email is already registered
+                if try await authProvider.isEmailRegistered(email) {
+                    userExistsAlertMessage = "User already exists with this email. Try a different email."
                     showUserExistsAlert = true
                     return false
                 }
@@ -51,8 +50,14 @@ class SignUpViewModel: ObservableObject {
                 // Create user in Firebase Auth
                 let authResult = try await createUserInAuth()
                 
-                // Save user metadata to Firestore
-                try await saveUserMetadata(uid: authResult.uid)
+                // Save user metadata to Firestore through the auth provider
+                let metadata = UserMetadata(
+                    uid: authResult.uid,
+                    email: email,
+                    firstName: firstName,
+                    lastName: lastName
+                )
+                try await authProvider.saveUserMetadata(metadata)
                 
                 // show success
                 successMessage = "User registered successfully"
@@ -124,39 +129,6 @@ class SignUpViewModel: ObservableObject {
         return passwordPredicate.evaluate(with: password)
     }
     
-    private func checkUserExists() async throws -> String? {
-        let usersCollection = Firestore.firestore().collection("users")
-        let normalizedEmail = email.lowercased()
-        let normalizedName = firstName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        //verifying email and firstname are matching with the existing user, if not then showing email already exists message, if matching then showing user already exists message
-        let emailQuery = try await usersCollection.whereField("email", isEqualTo: normalizedEmail).getDocuments()
-        if let existingEmailDoc = emailQuery.documents.first,
-           let existingUsername = existingEmailDoc.data()["username"] as? String {
-            if existingUsername.lowercased() != normalizedName {
-                return "User already exists with this email. Try a different email."
-            }
-            return "User already exists. Try a different name and email."
-        }
-        //if user first name is matching with the existing user, then showing user already exists message, if not then allowing to create new user
-        let nameQuery = try await usersCollection.whereField("username", isEqualTo: normalizedName).getDocuments()
-        if !nameQuery.documents.isEmpty {
-            return "User already exists. Try a different name and email."
-        }
-        
-        return nil
-    }
-    
-    private func saveUserMetadata(uid: String) async throws {
-        let usersCollection = Firestore.firestore().collection("users")
-        let data: [String: Any] = [
-            "username": firstName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
-            "email": email.lowercased(),
-            "firstName": firstName,
-            "lastName": lastName ?? "",
-            "uid": uid
-        ]
-        try await usersCollection.document(uid).setData(data)
-    }
     
     func clearFields() {
         firstName = ""
