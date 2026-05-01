@@ -24,7 +24,12 @@ class GoldmanSacksViewModel: ObservableObject {
         
         NetworkManager.download(url: url)
             .decode(type: [GSItems].self, decoder: JSONDecoder())
-            .sink(receiveCompletion: NetworkManager.handleCompletion, receiveValue: { [weak self] returnedItems in
+            .sink(receiveCompletion: { completion in
+                Task { @MainActor in
+                    NetworkManager.handleCompletion(completion: completion)
+                }
+            },
+                receiveValue: { [weak self] returnedItems in
                 self?.isLoading = false
                 self?.items = returnedItems
                 self?.getImages(for: returnedItems)
@@ -67,7 +72,7 @@ class GoldmanSacksViewModel: ObservableObject {
                 }
                 return image
             })
-            .sink(receiveCompletion: { [weak self] completion in
+            .sink(receiveCompletion: { completion in
                 NetworkManager.handleCompletion(completion: completion)
             }, receiveValue: { [weak self] returnedImage in
                 self?.images[urlString] = returnedImage
