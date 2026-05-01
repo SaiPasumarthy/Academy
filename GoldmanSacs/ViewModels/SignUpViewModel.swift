@@ -38,7 +38,7 @@ class SignUpViewModel: ObservableObject {
         if validateFields() {
             do {
                 // Create user in Firebase Auth
-                let authResult = try await createUserInAuth()
+                _ = try await signUp()
 
                 // show success
                 successMessage = "User registered successfully"
@@ -52,6 +52,10 @@ class SignUpViewModel: ObservableObject {
                 errorMessage = "Failed to save user metadata. Please try again later."
                 showErrorAlert = true
                 return false
+            }catch AuthenticationError.unknown {
+                errorMessage = "Unknown error. Please try again later."
+                showErrorAlert = true
+                return false
             } catch {
                 errorMessage = error.localizedDescription + " Please try again later."
                 showErrorAlert = true
@@ -61,14 +65,14 @@ class SignUpViewModel: ObservableObject {
         return false
     }
     
-    private func createUserInAuth() async throws -> AuthDataResultModel {
+    private func signUp() async throws -> AuthDataResultModel {
         return try await authProvider
-            .createUser(
+            .signUp(
             data: UserData(
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
-                password: password
+                firstName: firstName.trimmingCharacters(in: .whitespaces),
+                lastName: lastName?.trimmingCharacters(in: .whitespaces),
+                email: email.trimmingCharacters(in: .whitespaces),
+                password: password.trimmingCharacters(in: .whitespaces)
             )
         )
     }

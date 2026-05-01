@@ -9,7 +9,7 @@ import Foundation
 
 
 protocol AuthenticationProvider {
-    func createUser(data: UserData) async throws -> AuthDataResultModel
+    func signUp(data: UserData) async throws -> AuthDataResultModel
     func signIn(data: UserData) async throws -> AuthDataResultModel
     func signOut() throws
 }

@@ -12,31 +12,38 @@ import FirebaseFirestore
 enum AuthenticationError: Error {
     case emailAlreadyRegistered
     case metadataNotSaved
+    case unknown
 }
 
 class AuthencationManager: AuthenticationProvider {
 
-    func createUser(data: UserData) async throws -> AuthDataResultModel {
-        if try await isEmailRegistered(data.email) {
-            throw AuthenticationError.emailAlreadyRegistered
-        }
-        let authDataResult = try await Auth.auth().createUser(withEmail: data.email, password: data.password)
-        try await saveUserMetadata(data, id: authDataResult.user.uid)
-        return AuthDataResultModel(email: authDataResult.user.email ?? "", firstName: data.firstName, lastName: data.lastName ?? "")
+    func signUp(data: UserData) async throws -> AuthDataResultModel {
+        //create user
+        let authDataResult = try await createUser(data: data)
+        //save in database
+        try await saveUserMetadata(data, id: authDataResult.id)
+        return authDataResult
     }
 
     func signIn(data: UserData) async throws -> AuthDataResultModel {
         let authDataResult = try await Auth.auth().signIn(withEmail: data.email, password: data.password)
-        return AuthDataResultModel(email: authDataResult.user.email ?? "", firstName: data.firstName, lastName: data.lastName ?? "")
+        return AuthDataResultModel(id: authDataResult.user.uid,email: authDataResult.user.email ?? "", firstName: data.firstName, lastName: data.lastName ?? "")
     }
 
-    private func isEmailRegistered(_ email: String) async throws -> Bool {
-        let normalizedEmail = email.lowercased()
-        let usersCollection = Firestore.firestore().collection("users")
-        let querySnapshot = try await usersCollection.whereField("email", isEqualTo: normalizedEmail).getDocuments()
-        return !querySnapshot.documents.isEmpty
+    private func createUser(data: UserData) async throws -> AuthDataResultModel {
+        do {
+            let authDataResult = try await Auth.auth().createUser(withEmail: data.email, password: data.password)
+            return AuthDataResultModel(id: authDataResult.user.uid,email: authDataResult.user.email ?? "", firstName: data.firstName, lastName: data.lastName ?? "")
+        } catch {
+            if let err = error as NSError?,
+               AuthErrorCode(rawValue: err.code) == .emailAlreadyInUse {
+                throw AuthenticationError.emailAlreadyRegistered
+            } else {
+                throw AuthenticationError.unknown
+            }
+        }
     }
-
+    
     private func saveUserMetadata(_ data: UserData, id: String) async throws {
         let usersCollection = Firestore.firestore().collection("users")
         let metadata: [String: Any] = [
