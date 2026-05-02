@@ -11,6 +11,7 @@ struct LoginView: View {
     @StateObject private var viewModel = LoginViewModel()
     @State private var showMainView = false
     @State private var showSignUpView: Bool = false
+    @State private var showPassword = false
     
     @FocusState private var focusedField: Field?
 
@@ -29,26 +30,47 @@ struct LoginView: View {
                     TextField("Enter Email", text: $viewModel.email)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
-                        .focused($focusedField, equals: .username)
+                        .focused($focusedField, equals: .email)
                         .styledTextField()
+                    if !CredentialValidator.isValidEmail(viewModel.email) {
+                        Text(verbatim: "e.g. john@example.com")
+                            .font(.caption)
+                            .italic()
+                            .foregroundColor(.gray)
+                    }
 
                     Text("Password")
                         .secondaryHeadline()
-
-                    SecureField("Enter password", text: $viewModel.password)
-                        .focused($focusedField, equals: .password)
-                        .styledTextField()
+                    HStack {
+                        if showPassword {
+                            TextField("Enter password", text: $viewModel.password)
+                                .focused($focusedField, equals: .password)
+                        } else {
+                            SecureField("Enter password", text: $viewModel.password)
+                                .focused($focusedField, equals: .password)
+                        }
+                        Button(action: { showPassword.toggle() }) {
+                            Image(systemName: showPassword ? "eye.fill" : "eye.slash.fill")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .styledTextField()
                 }
                 .padding(.horizontal)
 
                 VStack(spacing: 14) {
                     Button(action: {
-                        // TODO: handle sign in action
+                        Task {
+                            if await viewModel.handleSignIn() {
+                                showMainView = true
+                            }
+                        }
+                        
                     }) {
                         Text("Sign In")
-                            .primaryButton(backgroundColor: false ? Color.blue : Color.gray.opacity(0.5), foregroundColor: .white)
+                            .primaryButton(backgroundColor: viewModel.isDisabled ? Color.gray.opacity(0.5):Color.blue, foregroundColor: .white)
                     }
-                    .disabled(true) // TODO: enable when sign in logic is implemented
+                    .disabled(viewModel.isDisabled)
 
                     Button(action: {
                         showSignUpView = true
@@ -74,9 +96,24 @@ struct LoginView: View {
             }
             
         }
+        .alert(viewModel.errorMessage, isPresented: $viewModel.showErrorAlert) {
+            Button("Cancel", role: .cancel) {
+                viewModel.clearFields()
+                focusedField = nil
+            }
+            if viewModel.invalidCred {
+                Button("OK") {
+                    showSignUpView = true
+                    viewModel.clearFields()
+                    viewModel.invalidCred = false
+                    focusedField = nil
+                }
+            }
+            
+        }
         .onChange(of: showMainView) { _, newValue in
             if !newValue {
-                viewModel.clearUserCredentials()
+                viewModel.clearFields()
                 focusedField = nil
             }
         }
@@ -85,7 +122,7 @@ struct LoginView: View {
 }
 
 enum Field {
-    case username, password
+    case email, password
 }
 
 #Preview {

@@ -21,7 +21,6 @@ struct GSItems: Codable, Identifiable {
 
 struct AuthDataResultModel {
     let id: String
-    let email: String
     let firstName: String
     let lastName: String?
 }

@@ -10,6 +10,6 @@ import Foundation
 
 protocol AuthenticationProvider {
     func signUp(data: UserData) async throws -> AuthDataResultModel
-    func signIn(data: UserData) async throws -> AuthDataResultModel
+    func signIn(email: String, password: String) async throws -> AuthDataResultModel
     func signOut() throws
 }

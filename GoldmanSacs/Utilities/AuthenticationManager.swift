@@ -12,10 +12,13 @@ import FirebaseFirestore
 enum AuthenticationError: Error {
     case emailAlreadyRegistered
     case metadataNotSaved
+    case invalidCredential
+    case userNotFound
+    case networkError
     case unknown
 }
 
-class AuthencationManager: AuthenticationProvider {
+class AuthenticationManager: AuthenticationProvider {
 
     func signUp(data: UserData) async throws -> AuthDataResultModel {
         //create user
@@ -25,15 +28,39 @@ class AuthencationManager: AuthenticationProvider {
         return authDataResult
     }
 
-    func signIn(data: UserData) async throws -> AuthDataResultModel {
-        let authDataResult = try await Auth.auth().signIn(withEmail: data.email, password: data.password)
-        return AuthDataResultModel(id: authDataResult.user.uid,email: authDataResult.user.email ?? "", firstName: data.firstName, lastName: data.lastName ?? "")
+    func signIn(email: String, password: String) async throws -> AuthDataResultModel {
+        //Sign in
+        let id = try await signingIn(email, password)
+        //fetch user data from data base
+        let userData = try await getUserMetadata(id: id)
+        return AuthDataResultModel(id: userData.id, firstName: userData.firstName, lastName: userData.lastName ?? "")
+    }
+    
+    private func signingIn(_ email: String, _ password: String) async throws -> String {
+        do {
+            let authDataResult = try await Auth.auth().signIn(withEmail: email, password: password)
+            return authDataResult.user.uid
+        } catch {
+            guard let err = error as NSError? else {
+                throw AuthenticationError.unknown
+            }
+            switch AuthErrorCode(rawValue: err.code) {
+            case .invalidCredential:
+                throw AuthenticationError.invalidCredential
+            case .networkError:
+                print("Network error")
+                throw AuthenticationError.networkError
+            default:
+                print("Unhandled error:", err.localizedDescription)
+                throw AuthenticationError.unknown
+            }
+        }
     }
 
     private func createUser(data: UserData) async throws -> AuthDataResultModel {
         do {
             let authDataResult = try await Auth.auth().createUser(withEmail: data.email, password: data.password)
-            return AuthDataResultModel(id: authDataResult.user.uid,email: authDataResult.user.email ?? "", firstName: data.firstName, lastName: data.lastName ?? "")
+            return AuthDataResultModel(id: authDataResult.user.uid, firstName: data.firstName, lastName: data.lastName ?? "")
         } catch {
             if let err = error as NSError?,
                AuthErrorCode(rawValue: err.code) == .emailAlreadyInUse {
@@ -57,6 +84,26 @@ class AuthencationManager: AuthenticationProvider {
         } catch {
             throw AuthenticationError.metadataNotSaved
         }
+    }
+    
+    private func getUserMetadata(id: String) async throws -> AuthDataResultModel {
+        let usersCollection = Firestore.firestore().collection("users")
+        
+        let document = try await usersCollection.document(id).getDocument()
+        guard document.exists else {
+            throw AuthenticationError.userNotFound
+        }
+        guard
+            let firstName = document.get("firstName") as? String,
+            let lastName = document.get("lastName") as? String
+        else {
+            throw AuthenticationError.metadataNotSaved
+        }
+        return AuthDataResultModel(
+            id: id,
+            firstName: firstName,
+            lastName: lastName
+        )
     }
 
     func signOut() throws {
