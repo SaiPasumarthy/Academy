@@ -33,7 +33,7 @@ class AuthenticationManager: AuthenticationProvider {
         let id = try await signingIn(email, password)
         //fetch user data from data base
         let userData = try await getUserMetadata(id: id)
-        return AuthDataResultModel(id: userData.id, firstName: userData.firstName, lastName: userData.lastName ?? "")
+        return AuthDataResultModel(id: userData.id, user: userData.user)
     }
     
     private func signingIn(_ email: String, _ password: String) async throws -> String {
@@ -60,7 +60,7 @@ class AuthenticationManager: AuthenticationProvider {
     private func createUser(data: UserData) async throws -> AuthDataResultModel {
         do {
             let authDataResult = try await Auth.auth().createUser(withEmail: data.email, password: data.password)
-            return AuthDataResultModel(id: authDataResult.user.uid, firstName: data.firstName, lastName: data.lastName ?? "")
+            return AuthDataResultModel(id: authDataResult.user.uid, user: data.user)
         } catch {
             if let err = error as NSError?,
                AuthErrorCode(rawValue: err.code) == .emailAlreadyInUse {
@@ -74,10 +74,8 @@ class AuthenticationManager: AuthenticationProvider {
     private func saveUserMetadata(_ data: UserData, id: String) async throws {
         let usersCollection = Firestore.firestore().collection("users")
         let metadata: [String: Any] = [
-            "firstName": data.firstName,
-            "lastName": data.lastName ?? "",
-            "email": data.email,
-            "password": data.password
+            "firstName": data.user.firstName,
+            "lastName": data.user.lastName ?? ""
         ]
         do {
             try await usersCollection.document(id).setData(metadata)
@@ -93,16 +91,13 @@ class AuthenticationManager: AuthenticationProvider {
         guard document.exists else {
             throw AuthenticationError.userNotFound
         }
-        guard
-            let firstName = document.get("firstName") as? String,
-            let lastName = document.get("lastName") as? String
-        else {
+        guard let firstName = document.get("firstName") as? String else {
             throw AuthenticationError.metadataNotSaved
         }
+        let lastName = document.get("lastName") as? String
         return AuthDataResultModel(
             id: id,
-            firstName: firstName,
-            lastName: lastName
+            user: UserSession(firstName: firstName, lastName: lastName)
         )
     }
 

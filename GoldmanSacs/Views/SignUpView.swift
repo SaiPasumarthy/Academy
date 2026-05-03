@@ -38,7 +38,7 @@ struct SignUpView: View {
                             .font(.caption)
                     }
                     
-                    TextField("Enter Second Name(Optional)", text: Binding(
+                    TextField("Enter Last Name(Optional)", text: Binding(
                         get: { viewModel.lastName ?? "" },
                         set: { viewModel.lastName = $0.isEmpty ? nil : $0 }
                     ))

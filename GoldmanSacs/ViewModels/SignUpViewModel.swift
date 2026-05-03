@@ -69,8 +69,7 @@ class SignUpViewModel: ObservableObject {
         return try await authProvider
             .signUp(
             data: UserData(
-                firstName: firstName.trimmingCharacters(in: .whitespaces),
-                lastName: lastName?.trimmingCharacters(in: .whitespaces),
+                user: UserSession(firstName: firstName.trimmingCharacters(in: .whitespaces), lastName: lastName?.trimmingCharacters(in: .whitespaces)),
                 email: email.trimmingCharacters(in: .whitespaces),
                 password: password.trimmingCharacters(in: .whitespaces)
             )

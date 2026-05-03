@@ -20,9 +20,17 @@ class LoginViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     private var authProvider: AuthenticationProvider
+    private var sessionStore: UserSessionStore
     
-    init(authProvider: AuthenticationProvider = AuthenticationManager()) {
+    var welcomeMessage: String {
+        let name = sessionStore.getUser().map { $0.firstName } ?? ""
+        return name.isEmpty ? "Welcome Back" : "Welcome \(name.capitalized)"
+    }
+    
+    init(authProvider: AuthenticationProvider = AuthenticationManager(),
+         sessionStore: UserSessionStore = UserDefaultsSessionStorageManager()) {
         self.authProvider = authProvider
+        self.sessionStore = sessionStore
         
         // Button state
         Publishers.CombineLatest($email, $password)
@@ -35,7 +43,8 @@ class LoginViewModel: ObservableObject {
     
     func handleSignIn() async -> Bool {
         do {
-            _ = try await authProvider.signIn(email: email, password: password)
+            let authData = try await authProvider.signIn(email: email, password: password)
+            sessionStore.saveUser(authData.user)
             return true
         } catch AuthenticationError.invalidCredential {
             errorMessage = "Incorrect Email or Password. if you are a new user click 'OK' to sign up"
@@ -55,6 +64,13 @@ class LoginViewModel: ObservableObject {
             showErrorAlert = true
             return false
         }
+    }
+    
+    func getCurrentUser() -> String {
+        if let user = sessionStore.getUser() {
+             return "\(user.firstName) \(user.lastName ?? "")"
+        }
+        return ""
     }
     
     func clearFields() {

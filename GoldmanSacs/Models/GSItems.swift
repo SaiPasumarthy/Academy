@@ -21,13 +21,16 @@ struct GSItems: Codable, Identifiable {
 
 struct AuthDataResultModel {
     let id: String
-    let firstName: String
-    let lastName: String?
+    let user: UserSession
 }
 
 struct UserData {
-    let firstName: String
-    let lastName: String?
+    let user: UserSession
     let email: String
     let password: String
+}
+
+struct UserSession: Codable {
+    let firstName: String
+    let lastName: String?
 }
