@@ -16,7 +16,6 @@ class LoginViewModel: ObservableObject {
     @Published var invalidCred: Bool = false
     @Published var isDisabled: Bool = true
     @Published var showErrorAlert = false
-    @Published var currentUser: String = ""
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -27,10 +26,6 @@ class LoginViewModel: ObservableObject {
          sessionStore: UserSessionStore = UserDefaultsSessionStore()) {
         self.authProvider = authProvider
         self.sessionStore = sessionStore
-        
-        if let user = sessionStore.getUser() {
-            self.currentUser = "\(user.firstName) \(user.lastName ?? "")"
-        }
         
         // Button state
         Publishers.CombineLatest($email, $password)
@@ -69,6 +64,13 @@ class LoginViewModel: ObservableObject {
             showErrorAlert = true
             return false
         }
+    }
+    
+    func getCurrentUser() -> String {
+        if let user = sessionStore.getUser() {
+             return "\(user.firstName) \(user.lastName ?? "")"
+        }
+        return ""
     }
     
     func clearFields() {

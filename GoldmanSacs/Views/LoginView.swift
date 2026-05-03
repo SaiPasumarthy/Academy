@@ -18,7 +18,7 @@ struct LoginView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 20) {
-                Text("Welcome \(viewModel.currentUser.isEmpty ? "Back" : viewModel.currentUser.capitalized)" )
+                Text("Welcome \(viewModel.getCurrentUser().isEmpty ? "Back" : viewModel.getCurrentUser().capitalized)" )
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
