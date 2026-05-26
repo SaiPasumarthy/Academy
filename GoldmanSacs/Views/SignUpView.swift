@@ -143,17 +143,9 @@ struct SignUpView: View {
             .alert(viewModel.errorMessage, isPresented: $viewModel.showErrorAlert) {
                Button("OK", role: .cancel) { viewModel.clearFields() }
             }
+            .loadingOverlay(viewModel.isLoading)
             Spacer()
             
-            if viewModel.isLoading {
-                VStack {
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                        .scaleEffect(1.5)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black.opacity(0.6))
-            }
         }
         .frame(maxHeight: .infinity, alignment: .top)
     }

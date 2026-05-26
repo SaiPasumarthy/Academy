@@ -61,9 +61,11 @@ struct LoginView: View {
                 VStack(spacing: 14) {
                     Button(action: {
                         Task {
+                            viewModel.isLoading = true
                             if await viewModel.handleSignIn() {
                                 showMainView = true
                             }
+                            viewModel.isLoading = false
                         }
                         
                     }) {
@@ -96,6 +98,7 @@ struct LoginView: View {
             }
             
         }
+        .loadingOverlay(viewModel.isLoading)
         .alert(viewModel.errorMessage, isPresented: $viewModel.showErrorAlert) {
             Button("Cancel", role: .cancel) {
                 viewModel.clearFields()

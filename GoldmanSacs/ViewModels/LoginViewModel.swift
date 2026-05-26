@@ -16,6 +16,7 @@ class LoginViewModel: ObservableObject {
     @Published var invalidCred: Bool = false
     @Published var isDisabled: Bool = true
     @Published var showErrorAlert = false
+    @Published var isLoading: Bool = false
     
     private var cancellables = Set<AnyCancellable>()
     

@@ -48,6 +48,24 @@ struct PrimaryButtonModifier: ViewModifier {
     }
 }
 
+struct LoadingOverlayView: ViewModifier {
+    let isLoading: Bool
+    func body (content: Content) -> some View {
+        ZStack {
+            content
+            
+            if isLoading {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .scaleEffect(1.5)
+            }
+        }
+    }
+}
+
 extension View {
     func secondaryHeadline() -> some View {
         self.modifier(SecondaryHeadlineModifier())
@@ -59,5 +77,9 @@ extension View {
     
     func primaryButton(backgroundColor: Color = .blue, foregroundColor: Color = .white) -> some View {
         self.modifier(PrimaryButtonModifier(backgroundColor: backgroundColor, foregroundColor: foregroundColor))
+    }
+    
+    func loadingOverlay(_ isLoading: Bool) -> some View {
+        self.modifier(LoadingOverlayView(isLoading: isLoading))
     }
 }

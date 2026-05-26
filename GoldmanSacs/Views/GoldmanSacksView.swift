@@ -14,22 +14,27 @@ struct GoldmanSacksView: View {
     var body: some View {
         NavigationView {
             Group {
-                if viewModel.isLoading {
-                    ProgressView("Loading...")
-                } else if viewModel.items.isEmpty {
-                    Text("No Items ....")
+                if viewModel.items.isEmpty {
+                    Text("Items Loading ....")
                 } else {
                     List {
                         ForEach(viewModel.items) { item in
-                            RowView(
-                                image: viewModel.getImage(for: item),
-                                title: item.title ?? "Untitled",
-                                explanation: item.explanation ?? "",
-                                date: viewModel.getParsedDate(for: item),
-                                onAppear: {
-                                    viewModel.loadImageIfNeeded(for: item)
-                                }
-                            )
+                            NavigationLink {
+                                ItemDetailView(
+                                    item: item,
+                                    image: viewModel.getImage(for: item)
+                                )
+                            } label: {
+                                RowView(
+                                    image: viewModel.getImage(for: item),
+                                    title: item.title ?? "Untitled",
+                                    explanation: item.explanation ?? "",
+                                    date: viewModel.getParsedDate(for: item),
+                                    onAppear: {
+                                        viewModel.loadImageIfNeeded(for: item)
+                                    }
+                                )
+                            }
                             .listRowSeparator(.hidden)
                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         }
@@ -47,6 +52,7 @@ struct GoldmanSacksView: View {
                     .foregroundColor(.primary)
             })
         }
+        .loadingOverlay(viewModel.isLoading)
     }
 }
 
